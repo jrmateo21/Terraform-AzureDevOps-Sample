@@ -36,7 +36,7 @@ stages:
       inputs:
         provider: 'azurerm'
         command: 'plan'
-        commandOptions: -out $(Build.SourceDirectory)/tfplanfile
+        commandOptions: '-out $(Build.SourceDirectory)/tfplanfile'
         environmentServiceNameAzureRM: 'Azure subscription 1(0ca97444-2659-431c-a371-313879a222d8)'
     - task: ArchiveFiles@2
       displayName: Archive Files
