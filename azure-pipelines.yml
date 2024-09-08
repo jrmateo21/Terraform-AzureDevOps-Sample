@@ -1,0 +1,55 @@
+trigger: 
+- main
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: TerraformTaskV4@4
+      displayName: TF Init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: 'Azure subscription 1(0ca97444-2659-431c-a371-313879a222d8)'
+        backendAzureRmResourceGroupName: 'mtc-rg'
+        backendAzureRmStorageAccountName: 'mtcrgstorageaccount'
+        backendAzureRmContainerName: 'prod-tfstate'
+        backendAzureRmKey: 'prod.terraform.tfstate'
+    - task: TerraformTaskV4@4
+      displayName: TF Validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+    - task: TerraformTaskV4@4
+      displayName: TF Format
+      inputs:
+        provider: 'azurerm'
+        command: 'custom'
+        outputTo: 'console'
+        customCommand: 'fmt'
+        environmentServiceNameAzureRM: 'Azure subscription 1(0ca97444-2659-431c-a371-313879a222d8)'
+    - task: TerraformTaskV4@4
+      displayName: TF Plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        commandOptions: -out $(Build.SourceDirectory)/tfplanfile
+        environmentServiceNameAzureRM: 'Azure subscription 1(0ca97444-2659-431c-a371-313879a222d8)'
+    - task: ArchiveFiles@2
+      displayName: Archive Files
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)'
+        includeRootFolder: true
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+    - task: PublishBuildArtifacts@1
+      displayName: Build Artifacts
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: '$(Build.BuildId)-build'
+        publishLocation: 'Container'
+    
